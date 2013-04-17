@@ -42,6 +42,7 @@ when "rhel"
   include_recipe "build-essential"
   # `rpmdevtools` is in EPEL repo in EL <= 5
   include_recipe "yum::epel" if node["platform_version"].to_i <= 5
+  tmp_dir = Dir.mktmpdir
 
   packages = %w{rpm-build rpmdevtools tar gzip}
   packages.each do |p|
@@ -54,7 +55,7 @@ when "rhel"
     package "buildsys-macros"
   end
 
-  cookbook_file "#{Chef::Config[:file_cache_path]}/runit-2.1.1.tar.gz" do
+  cookbook_file "#{tmp_dir}/runit-2.1.1.tar.gz" do
     source "runit-2.1.1.tar.gz"
     not_if "rpm -qa | grep -q '^runit'"
     notifies :run, "bash[rhel_build_install]", :immediately
@@ -62,7 +63,7 @@ when "rhel"
 
   bash "rhel_build_install" do
     user "root"
-    cwd Chef::Config[:file_cache_path]
+    cwd tmp_dir
     code <<-EOH
       tar xzf runit-2.1.1.tar.gz
       cd runit-2.1.1
